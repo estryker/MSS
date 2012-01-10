@@ -1,17 +1,10 @@
-
-# TODO: fix it so that Bundler does the requires
-# Bundler.require(:default)
-# require 'activesupport'
-# require 'action_dispatch'
 require 'sinatra/base'
-require 'sinatra/activerecord'
-require 'sinatra/synchrony' # note: must use thin for this to work
+
 require './user'
 require './session'
 require './helpers/session_helper'
 require './geo_event'
-require 'xmlsimple'
-require 'json'
+require './helpers/external_apis'
 
 include SessionsHelper
 
@@ -67,6 +60,9 @@ class MapSqueak < Sinatra::Base
 
     $stderr.puts data
     @squeak = create_geo_event(data[:squeak].merge({:user_id => current_user.email}))# current_user.email
+    
+    # TODO: put the facebook token at a different part of the XML? this confuses the ActiveRecord initializer
+    squeak_to_facebook(@squeak,data[:squeak][:facebook_token],request.host) if data[:squeak].has_key?(:facebook_token)
 
     case params[:format]
     when 'xml'
